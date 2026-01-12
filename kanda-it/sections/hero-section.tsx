@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { gsap } from 'gsap';
+import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { gsap } from "gsap";
 
 export default function HeroSection() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -16,25 +16,30 @@ export default function HeroSection() {
   const badgeRef = useRef<HTMLDivElement | null>(null);
 
   // State for the dynamic SVG path
-  const [clipPathId] = useState('hero-card-clip');
-  const [pathD, setPathD] = useState('');
+  const [clipPathId] = useState("hero-card-clip");
+  const [pathD, setPathD] = useState("");
 
-  // 1. GSAP Animation Setup
+  // 1. GSAP Animation Setup (Hero card parts animate together)
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-      tl.fromTo(h1Ref.current, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power4.out' })
-        .fromTo(introRef.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55 }, '-=0.35')
-        .fromTo(cardRef.current, { opacity: 0, y: 24, scale: 0.99 }, { opacity: 1, y: 0, scale: 1, duration: 0.75 }, '-=0.15')
-        .fromTo(robotRef.current, { opacity: 0, y: 26, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.7 }, '-=0.55')
-        .fromTo(badgeRef.current, { opacity: 0, y: 16, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.55 }, '-=0.45');
+      tl.fromTo(
+        [h1Ref.current, introRef.current],
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.75, ease: "power4.out", stagger: 0 }
+      ).fromTo(
+        [cardRef.current, robotRef.current, badgeRef.current],
+        { opacity: 0, y: 22, scale: 0.99 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0 },
+        "-=0.25"
+      );
     }, wrapRef);
 
     return () => ctx.revert();
   }, []);
 
-  // 2. Logic to Generate the SVG Path for Rounded Notch
+  // 2. Logic to Generate the SVG Path for Rounded Notch (notch only on >=1024)
   useLayoutEffect(() => {
     const updatePath = () => {
       if (!cardRef.current) return;
@@ -43,49 +48,46 @@ export default function HeroSection() {
       const W = rect.width;
       const H = rect.height;
 
-      // Configuration matching your design
-      const isMd = window.innerWidth >= 1024; // Tailwind's md breakpoint
+      // Notch only on >=1024 (lg)
+      const isLg = window.innerWidth >= 1024;
 
       let notchW = 0;
       let notchH = 0;
 
-      if (isMd) {
-        // Based on your CSS: md:[--notch-w:clamp(280px,26vw,360px)]
+      if (isLg) {
         notchW = Math.max(280, Math.min(window.innerWidth * 0.26, 340));
         notchH = Math.max(160, Math.min(window.innerWidth * 0.18, 210));
       }
 
-      const R = 24; // Outer Card Radius (Softer)
-      const notchR = 24; // Inner Notch Radius (Sharper, as requested)
+      const R = 24; // Outer Card Radius
+      const notchR = 24; // Inner Notch Radius
 
-      let d = '';
+      let d = "";
 
-      if (!isMd) {
-        // Mobile: Simple Rounded Rectangle
+      if (!isLg) {
         d = `
-          M 0,${R} 
-          Q 0,0 ${R},0 
-          L ${W - R},0 
-          Q ${W},0 ${W},${R} 
-          L ${W},${H - R} 
-          Q ${W},${H} ${W - R},${H} 
-          L ${R},${H} 
-          Q 0,${H} 0,${H - R} 
+          M 0,${R}
+          Q 0,0 ${R},0
+          L ${W - R},0
+          Q ${W},0 ${W},${R}
+          L ${W},${H - R}
+          Q ${W},${H} ${W - R},${H}
+          L ${R},${H}
+          Q 0,${H} 0,${H - R}
           Z
         `;
       } else {
-        // Desktop: Card with Bottom-Left Notch
         d = `
-          M 0,${R}                         
-          Q 0,0 ${R},0                     
-          L ${W - R},0                     
-          Q ${W},0 ${W},${R}               
-          L ${W},${H - R}                  
-          Q ${W},${H} ${W - R},${H}        
-          
-          L ${notchW + notchR},${H}        
-          Q ${notchW},${H} ${notchW},${H - notchR} 
-          L ${notchW},${H - notchH + notchR} 
+          M 0,${R}
+          Q 0,0 ${R},0
+          L ${W - R},0
+          Q ${W},0 ${W},${R}
+          L ${W},${H - R}
+          Q ${W},${H} ${W - R},${H}
+
+          L ${notchW + notchR},${H}
+          Q ${notchW},${H} ${notchW},${H - notchR}
+          L ${notchW},${H - notchH + notchR}
           Q ${notchW},${H - notchH} ${notchW - notchR},${H - notchH}
           L ${notchR},${H - notchH}
           Q 0,${H - notchH} 0,${H - notchH - notchR}
@@ -94,26 +96,23 @@ export default function HeroSection() {
         `;
       }
 
-      setPathD(d.replace(/\s+/g, ' '));
+      setPathD(d.replace(/\s+/g, " "));
     };
 
     updatePath();
 
     const resizeObserver = new ResizeObserver(() => updatePath());
     if (cardRef.current) resizeObserver.observe(cardRef.current);
-    window.addEventListener('resize', updatePath);
+    window.addEventListener("resize", updatePath);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updatePath);
+      window.removeEventListener("resize", updatePath);
     };
   }, []);
 
   return (
     <section ref={wrapRef} className="bg-white overflow-hidden">
-      {/* ================================================================
-        SVG DEFINITION (Hidden)
-        ================================================================ */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
         <defs>
           <clipPath id={clipPathId} clipPathUnits="userSpaceOnUse">
@@ -164,12 +163,21 @@ export default function HeroSection() {
           {/* ======================= INTRO ======================= */}
           <div className="mt-8 lg:mt-12">
             <div ref={introRef} className="w-full">
-              <div className="max-w-[360px] md:pl-10 md:max-w-[420px]">
-                <h3 className="text-[15px] md:text-base font-bold text-black font-urbanist">Kanda-it</h3>
+              <div
+                className="
+                  max-w-[360px] md:pl-10 md:max-w-[420px]
+                  mx-auto md:mx-0
+                  text-center md:text-left
+                "
+              >
+                <h3 className="text-[15px] md:text-base font-bold text-black font-urbanist">
+                  Kanda-it
+                </h3>
                 <p className="mt-2 text-[12px] md:text-[13px] leading-relaxed text-zinc-600 font-medium">
-                  is a technology partner specializing in Web and App Development, Automation, and Data
-                  Management. We deliver custom ERP solutions, driving efficiency and digital transformation
-                  for businesses seeking quality results.
+                  is a technology partner specializing in Web and App
+                  Development, Automation, and Data Management. We deliver
+                  custom ERP solutions, driving efficiency and digital
+                  transformation for businesses seeking quality results.
                 </p>
               </div>
             </div>
@@ -181,8 +189,8 @@ export default function HeroSection() {
               className="
                 relative w-full max-w-[1280px] mx-auto overflow-visible
                 [--notch-w:0px] [--notch-h:0px]
-                md:[--notch-w:clamp(280px,26vw,360px)]
-                md:[--notch-h:clamp(160px,18vw,210px)]
+                lg:[--notch-w:clamp(280px,26vw,340px)]
+                lg:[--notch-h:clamp(160px,18vw,210px)]
               "
             >
               {/* Card */}
@@ -190,19 +198,18 @@ export default function HeroSection() {
                 ref={cardRef}
                 className="
                   relative w-full
-                  h-[690px] sm:h-[760px] md:h-[460px] lg:h-[500px]
+                  h-[650px] sm:h-[720px] lg:h-[500px]
                   shadow-2xl text-white
                 "
                 style={{
                   clipPath: `url(#${clipPathId})`,
-                  willChange: 'clip-path'
+                  willChange: "clip-path",
                 }}
               >
                 {/* Background */}
                 <div className="absolute inset-0 z-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#151515] to-[#E65C00]" />
 
-                  {/* MOBILE uses hero-bg-mobile.png, DESKTOP keeps your current hero-bg.png */}
                   <div
                     className="
                       absolute inset-0
@@ -210,8 +217,8 @@ export default function HeroSection() {
                       bg-no-repeat opacity-95 mix-blend-overlay
                     "
                     style={{
-                      backgroundSize: '210% 210%',
-                      backgroundPosition: '55% 60%',
+                      backgroundSize: "210% 210%",
+                      backgroundPosition: "55% 60%",
                     }}
                   />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(0,0,0,0.55),transparent_60%)]" />
@@ -221,32 +228,42 @@ export default function HeroSection() {
                 <div
                   className="
                     relative z-40 h-full
-                    grid grid-cols-1 md:grid-cols-2
-                    p-8 sm:p-10 md:p-12 lg:p-14
-                    md:pb-14
-                    pb-[260px] sm:pb-[300px]
+                    grid grid-cols-1 lg:grid-cols-2
+                    p-6 sm:p-8 lg:p-14
+                    lg:pb-14
+                    pb-[220px] sm:pb-[250px]
+                    gap-4 sm:gap-5 lg:gap-0
                   "
                 >
                   {/* Left side */}
-                  <div className="flex flex-col justify-between h-full">
-                    <h2 className="font-urbanist font-semibold leading-tight text-[20px] sm:text-[22px] md:text-[26px] lg:text-[28px]">
-                      Seamless Digital <br />
-                      Solutions &amp; Scalable <br />
-                      Systems
+                  <div className="flex flex-col justify-between h-full text-center lg:text-left items-center lg:items-start">
+                    <h2 className="font-urbanist font-semibold leading-tight text-[20px] sm:text-[22px] lg:text-[28px]">
+                      <span className="lg:hidden">
+                        Seamless Digital Solutions &amp; Scalable Systems
+                      </span>
+                      <span className="hidden lg:inline">
+                        Seamless Digital <br />
+                        Solutions &amp; Scalable <br />
+                        Systems
+                      </span>
                     </h2>
 
                     <ul
-                      className="space-y-2 mt-6 md:mt-auto"
-                      style={{
-                        paddingBottom: 'calc(var(--notch-h) + 18px)',
-                      }}
+                      className="space-y-2 mt-2 sm:mt-3 lg:mt-auto w-full max-w-[360px] lg:max-w-none mx-auto lg:mx-0"
+                      style={{ paddingBottom: "calc(var(--notch-h) + 18px)" }}
                     >
-                      {['Expert Full-Stack Talent', 'Automated Business Flow', 'Custom ERP Architecture'].map((item, i) => (
+                      {[
+                        "Expert Full-Stack Talent",
+                        "Automated Business Flow",
+                        "Custom ERP Architecture",
+                      ].map((item, i) => (
                         <li
                           key={i}
-                          className="flex items-center gap-3 text-[12px] sm:text-[13px] md:text-[14px] font-medium text-white/90"
+                          className="flex items-center justify-center lg:justify-start gap-3 text-[12px] sm:text-[13px] lg:text-[14px] font-medium text-white/90"
                         >
-                          <span className="text-[#FF7A30] font-bold text-[16px] leading-none">✓</span>
+                          <span className="text-[#FF7A30] font-bold text-[16px] leading-none">
+                            ✓
+                          </span>
                           {item}
                         </li>
                       ))}
@@ -254,25 +271,42 @@ export default function HeroSection() {
                   </div>
 
                   {/* Right side */}
-                  <div className="flex flex-col justify-center items-start md:items-end text-left md:text-right mt-6 md:mt-15">
-                    <p className="text-[12px] sm:text-[13px] md:text-[14px] text-white/85 leading-relaxed max-w-[330px] mb-6 md:mb-9">
-                      Deploy high-performance web applications and automated workflows. Scale your business
-                      operations with our dedicated expert developers.
+                  <div className="flex flex-col justify-start lg:justify-center items-center lg:items-end text-center lg:text-right mt-0">
+                    <p className="text-[12px] sm:text-[13px] lg:text-[14px] text-white/85 leading-relaxed max-w-[330px] mb-3 sm:mb-4 lg:mb-9">
+                      Deploy high-performance web applications and automated
+                      workflows. Scale your business operations with our
+                      dedicated expert developers.
                     </p>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center lg:justify-end gap-3">
                       <Link
                         href="/"
-                        className="bg-white text-black px-6 py-3 rounded-full text-[13px] font-bold shadow-lg hover:bg-gray-100 transition-colors"
+                        className="
+                          bg-white text-black px-6 py-3 rounded-full text-[13px] font-bold shadow-lg
+                          hover:bg-gray-100 transition-colors
+                          inline-flex items-center justify-center
+                          whitespace-nowrap
+                        "
                       >
                         Schedule a free call
                       </Link>
 
                       <Link
                         href="/"
-                        className="w-11 h-11 bg-white rounded-full flex items-center justify-center text-black shadow-lg hover:bg-gray-100 transition-colors"
+                        className="
+                          w-11 h-11 bg-white rounded-full flex items-center justify-center text-black shadow-lg
+                          hover:bg-gray-100 transition-colors
+                          shrink-0
+                        "
+                        aria-label="Open"
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 14 14"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
                           <path
                             d="M1 13L13 1M13 1H5M13 1V9"
                             stroke="currentColor"
@@ -291,7 +325,7 @@ export default function HeroSection() {
                   className="
                     absolute inset-x-0 bottom-0
                     z-30
-                    md:hidden
+                    lg:hidden
                     pointer-events-none
                     flex justify-center
                   "
@@ -309,21 +343,19 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Robot (DESKTOP stays exactly like your current logic) */}
+              {/* Robot (DESKTOP >=1024) */}
               <div
                 ref={robotRef}
                 className="
                   absolute
-                  left-[56%] md:left-[55%] lg:left-[54%]
+                  left-[56%] lg:left-[54%]
                   bottom-[5px]
                   z-30
                   pointer-events-none
-                  w-[320px] sm:w-[440px] md:w-[600px] lg:w-[700px]
-                  hidden md:block
+                  w-[320px] sm:w-[440px] lg:w-[700px]
+                  hidden lg:block
                 "
-                style={{
-                  transform: 'translateX(-50%) translateY(-48%)',
-                }}
+                style={{ transform: "translateX(-50%) translateY(-48%)" }}
               >
                 <Image
                   src="/assets/hero.png"
@@ -335,38 +367,54 @@ export default function HeroSection() {
                 />
               </div>
 
-              {/* Badge */}
+              {/* Badge (mobile full width, desktop notch width + right margin) */}
               <div
                 ref={badgeRef}
                 className="
                   pointer-events-auto
-                  mt-6 md:mt-0
-                  md:absolute md:left-0 md:bottom-0
-                  md:z-50
+                  mt-5 lg:mt-0
+                  lg:absolute lg:left-0 lg:bottom-0
+                  lg:z-50
+                  mx-auto lg:mx-0
+
+                  w-full
+                  max-w-[100vw]
+                  lg:max-w-none
+
+                  lg:w-[calc(var(--notch-w)-20px)]
+                  lg:mr-8
+                  xl:mr-10
                 "
                 style={{
-                  width: 'min(92vw, 320px)',
-                  transform: 'translate3d(0,0,0)',
-                  marginBottom: 'clamp(0px, 0.9vw, 4px)',
+                  transform: "translate3d(0,0,0)",
+                  marginBottom: "clamp(0px, 0.9vw, 4px)",
                 }}
               >
                 <div
                   className="bg-[#EAEAEA] rounded-[24px] p-6 shadow-xl relative overflow-hidden"
                   style={{
-                    minHeight: 'calc(var(--notch-h) - 18px)',
+                    minHeight: "max(180px, calc(var(--notch-h) - 18px))",
                   }}
                 >
                   <div className="absolute -right-6 -top-6 w-20 h-20 bg-white/50 rounded-full blur-xl" />
 
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h4 className="text-3xl font-bold font-urbanist text-black">100%</h4>
+                      <h4 className="text-3xl font-bold font-urbanist text-black">
+                        100%
+                      </h4>
                       <p className="text-[10px] font-bold tracking-wider text-black mt-1 uppercase">
                         Quality Guarantee
                       </p>
                     </div>
                     <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
                         <path
                           d="M1 11L11 1M11 1H3M11 1V9"
                           stroke="black"
@@ -379,8 +427,8 @@ export default function HeroSection() {
                   </div>
 
                   <p className="text-[11px] leading-tight text-zinc-600 mt-3 mb-4">
-                    expert team delivers precision-engineered solutions tailored to your unique business goals
-                    and digital growth.
+                    expert team delivers precision-engineered solutions tailored
+                    to your unique business goals and digital growth.
                   </p>
 
                   <Link
@@ -393,6 +441,7 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
+
           {/* ======================= END HERO CARD ======================= */}
         </div>
       </div>
