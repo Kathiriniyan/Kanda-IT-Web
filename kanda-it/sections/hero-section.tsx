@@ -7,7 +7,7 @@ import { gsap } from 'gsap';
 
 export default function HeroSection() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  
+
   // Animation Refs
   const h1Ref = useRef<HTMLHeadingElement | null>(null);
   const introRef = useRef<HTMLDivElement | null>(null);
@@ -45,26 +45,19 @@ export default function HeroSection() {
 
       // Configuration matching your design
       const isMd = window.innerWidth >= 1024; // Tailwind's md breakpoint
-      
+
       let notchW = 0;
       let notchH = 0;
-      
+
       if (isMd) {
-         // Based on your CSS: md:[--notch-w:clamp(280px,26vw,360px)]
-         notchW = Math.max(280, Math.min(window.innerWidth * 0.26, 340));
-         notchH = Math.max(160, Math.min(window.innerWidth * 0.18, 210));
+        // Based on your CSS: md:[--notch-w:clamp(280px,26vw,360px)]
+        notchW = Math.max(280, Math.min(window.innerWidth * 0.26, 340));
+        notchH = Math.max(160, Math.min(window.innerWidth * 0.18, 210));
       }
 
       const R = 24; // Outer Card Radius (Softer)
       const notchR = 24; // Inner Notch Radius (Sharper, as requested)
 
-      /**
-       * SVG PATH LOGIC (Counter-Clockwise starting Top-Left):
-       * M = Move to
-       * L = Line to
-       * Q = Quadratic Bezier (ControlPointX, ControlPointY, EndPointX, EndPointY)
-       */
-      
       let d = '';
 
       if (!isMd) {
@@ -90,25 +83,12 @@ export default function HeroSection() {
           L ${W},${H - R}                  
           Q ${W},${H} ${W - R},${H}        
           
-          ${/* 1. Move left along bottom edge to the start of the Notch curve */ ''}
           L ${notchW + notchR},${H}        
-
-          ${/* 2. Curve UP into the notch (Concave turn) */ ''}
           Q ${notchW},${H} ${notchW},${H - notchR} 
-          
-          ${/* 3. Go UP the vertical wall of the notch */ ''}
           L ${notchW},${H - notchH + notchR} 
-
-          ${/* 4. Curve LEFT out of the notch (Convex turn) */ ''}
           Q ${notchW},${H - notchH} ${notchW - notchR},${H - notchH}
-
-          ${/* 5. Go LEFT along the horizontal shelf to the Edge... BUT STOP for the corner */ ''}
           L ${notchR},${H - notchH}
-
-          ${/* 6. Curve UP at the Left Edge (The corner you highlighted) */ ''}
           Q 0,${H - notchH} 0,${H - notchH - notchR}
-
-          ${/* 7. Close the shape back to the start (Vertical line up left edge) */ ''}
           L 0,${R}
           Z
         `;
@@ -117,10 +97,8 @@ export default function HeroSection() {
       setPathD(d.replace(/\s+/g, ' '));
     };
 
-    // Run on mount
     updatePath();
 
-    // Run on resize
     const resizeObserver = new ResizeObserver(() => updatePath());
     if (cardRef.current) resizeObserver.observe(cardRef.current);
     window.addEventListener('resize', updatePath);
@@ -133,11 +111,9 @@ export default function HeroSection() {
 
   return (
     <section ref={wrapRef} className="bg-white overflow-hidden">
-      
       {/* ================================================================
         SVG DEFINITION (Hidden)
-        ================================================================
-      */}
+        ================================================================ */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
         <defs>
           <clipPath id={clipPathId} clipPathUnits="userSpaceOnUse">
@@ -214,7 +190,7 @@ export default function HeroSection() {
                 ref={cardRef}
                 className="
                   relative w-full
-                  h-[350px] sm:h-[400px] md:h-[460px] lg:h-[500px]
+                  h-[690px] sm:h-[760px] md:h-[460px] lg:h-[500px]
                   shadow-2xl text-white
                 "
                 style={{
@@ -226,18 +202,31 @@ export default function HeroSection() {
                 <div className="absolute inset-0 z-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#151515] to-[#E65C00]" />
 
+                  {/* MOBILE uses hero-bg-mobile.png, DESKTOP keeps your current hero-bg.png */}
                   <div
-                    className="absolute inset-0 bg-[url('/assets/hero-bg.png')] bg-no-repeat opacity-95 mix-blend-overlay"
+                    className="
+                      absolute inset-0
+                      bg-[url('/assets/hero-bg-mobile.png')] lg:bg-[url('/assets/hero-bg.png')]
+                      bg-no-repeat opacity-95 mix-blend-overlay
+                    "
                     style={{
-                      backgroundSize: '175% 175%',
-                      backgroundPosition: '62% 55%',
+                      backgroundSize: '210% 210%',
+                      backgroundPosition: '55% 60%',
                     }}
                   />
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(0,0,0,0.55),transparent_60%)]" />
                 </div>
 
                 {/* Content */}
-                <div className="relative z-40 h-full grid grid-cols-1 md:grid-cols-2 p-8 sm:p-10 md:p-12 lg:p-14">
+                <div
+                  className="
+                    relative z-40 h-full
+                    grid grid-cols-1 md:grid-cols-2
+                    p-8 sm:p-10 md:p-12 lg:p-14
+                    md:pb-14
+                    pb-[260px] sm:pb-[300px]
+                  "
+                >
                   {/* Left side */}
                   <div className="flex flex-col justify-between h-full">
                     <h2 className="font-urbanist font-semibold leading-tight text-[20px] sm:text-[22px] md:text-[26px] lg:text-[28px]">
@@ -248,19 +237,19 @@ export default function HeroSection() {
 
                     <ul
                       className="space-y-2 mt-6 md:mt-auto"
-                      style={{ paddingBottom: 'calc(var(--notch-h) + 18px)' }}
+                      style={{
+                        paddingBottom: 'calc(var(--notch-h) + 18px)',
+                      }}
                     >
-                      {['Expert Full-Stack Talent', 'Automated Business Flow', 'Custom ERP Architecture'].map(
-                        (item, i) => (
-                          <li
-                            key={i}
-                            className="flex items-center gap-3 text-[12px] sm:text-[13px] md:text-[14px] font-medium text-white/90"
-                          >
-                            <span className="text-[#FF7A30] font-bold text-[16px] leading-none">✓</span>
-                            {item}
-                          </li>
-                        )
-                      )}
+                      {['Expert Full-Stack Talent', 'Automated Business Flow', 'Custom ERP Architecture'].map((item, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center gap-3 text-[12px] sm:text-[13px] md:text-[14px] font-medium text-white/90"
+                        >
+                          <span className="text-[#FF7A30] font-bold text-[16px] leading-none">✓</span>
+                          {item}
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -296,6 +285,54 @@ export default function HeroSection() {
                     </div>
                   </div>
                 </div>
+
+                {/* ROBOT INSIDE CARD ON <1024 */}
+                <div
+                  className="
+                    absolute inset-x-0 bottom-0
+                    z-30
+                    md:hidden
+                    pointer-events-none
+                    flex justify-center
+                  "
+                >
+                  <div className="w-[320px] sm:w-[440px]">
+                    <Image
+                      src="/assets/hero.png"
+                      alt="Robot Head"
+                      width={1400}
+                      height={1400}
+                      priority
+                      className="w-full h-auto object-contain drop-shadow-2xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Robot (DESKTOP stays exactly like your current logic) */}
+              <div
+                ref={robotRef}
+                className="
+                  absolute
+                  left-[56%] md:left-[55%] lg:left-[54%]
+                  bottom-[5px]
+                  z-30
+                  pointer-events-none
+                  w-[320px] sm:w-[440px] md:w-[600px] lg:w-[700px]
+                  hidden md:block
+                "
+                style={{
+                  transform: 'translateX(-50%) translateY(-48%)',
+                }}
+              >
+                <Image
+                  src="/assets/hero.png"
+                  alt="Robot Head"
+                  width={1400}
+                  height={1400}
+                  priority
+                  className="w-full h-auto object-contain drop-shadow-2xl"
+                />
               </div>
 
               {/* Badge */}
@@ -310,7 +347,6 @@ export default function HeroSection() {
                 style={{
                   width: 'min(92vw, 320px)',
                   transform: 'translate3d(0,0,0)',
-                  // marginLeft: 'clamp(0px, 0.9vw, 14px)',
                   marginBottom: 'clamp(0px, 0.9vw, 4px)',
                 }}
               >
@@ -354,31 +390,6 @@ export default function HeroSection() {
                     See services
                   </Link>
                 </div>
-              </div>
-
-              {/* Robot */}
-              <div
-                ref={robotRef}
-                className="
-                  absolute
-                  left-[56%] md:left-[55%] lg:left-[54%]
-                  bottom-[5px]
-                  z-30
-                  pointer-events-none
-                  w-[320px] sm:w-[440px] md:w-[600px] lg:w-[700px]
-                "
-                style={{
-                  transform: 'translateX(-50%) translateY(-48%)',
-                }}
-              >
-                <Image
-                  src="/assets/hero.png"
-                  alt="Robot Head"
-                  width={1400}
-                  height={1400}
-                  priority
-                  className="w-full h-auto object-contain drop-shadow-2xl"
-                />
               </div>
             </div>
           </div>
