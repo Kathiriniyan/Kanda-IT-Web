@@ -1,19 +1,25 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 
 export default function HeroSection() {
   const wrapRef = useRef<HTMLDivElement | null>(null);
-
+  
+  // Animation Refs
   const h1Ref = useRef<HTMLHeadingElement | null>(null);
   const introRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const robotRef = useRef<HTMLDivElement | null>(null);
   const badgeRef = useRef<HTMLDivElement | null>(null);
 
+  // State for the dynamic SVG path
+  const [clipPathId] = useState('hero-card-clip');
+  const [pathD, setPathD] = useState('');
+
+  // 1. GSAP Animation Setup
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -28,8 +34,118 @@ export default function HeroSection() {
     return () => ctx.revert();
   }, []);
 
+  // 2. Logic to Generate the SVG Path for Rounded Notch
+  useLayoutEffect(() => {
+    const updatePath = () => {
+      if (!cardRef.current) return;
+
+      const rect = cardRef.current.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+
+      // Configuration matching your design
+      const isMd = window.innerWidth >= 1024; // Tailwind's md breakpoint
+      
+      let notchW = 0;
+      let notchH = 0;
+      
+      if (isMd) {
+         // Based on your CSS: md:[--notch-w:clamp(280px,26vw,360px)]
+         notchW = Math.max(280, Math.min(window.innerWidth * 0.26, 340));
+         notchH = Math.max(160, Math.min(window.innerWidth * 0.18, 210));
+      }
+
+      const R = 24; // Outer Card Radius (Softer)
+      const notchR = 24; // Inner Notch Radius (Sharper, as requested)
+
+      /**
+       * SVG PATH LOGIC (Counter-Clockwise starting Top-Left):
+       * M = Move to
+       * L = Line to
+       * Q = Quadratic Bezier (ControlPointX, ControlPointY, EndPointX, EndPointY)
+       */
+      
+      let d = '';
+
+      if (!isMd) {
+        // Mobile: Simple Rounded Rectangle
+        d = `
+          M 0,${R} 
+          Q 0,0 ${R},0 
+          L ${W - R},0 
+          Q ${W},0 ${W},${R} 
+          L ${W},${H - R} 
+          Q ${W},${H} ${W - R},${H} 
+          L ${R},${H} 
+          Q 0,${H} 0,${H - R} 
+          Z
+        `;
+      } else {
+        // Desktop: Card with Bottom-Left Notch
+        d = `
+          M 0,${R}                         
+          Q 0,0 ${R},0                     
+          L ${W - R},0                     
+          Q ${W},0 ${W},${R}               
+          L ${W},${H - R}                  
+          Q ${W},${H} ${W - R},${H}        
+          
+          ${/* 1. Move left along bottom edge to the start of the Notch curve */ ''}
+          L ${notchW + notchR},${H}        
+
+          ${/* 2. Curve UP into the notch (Concave turn) */ ''}
+          Q ${notchW},${H} ${notchW},${H - notchR} 
+          
+          ${/* 3. Go UP the vertical wall of the notch */ ''}
+          L ${notchW},${H - notchH + notchR} 
+
+          ${/* 4. Curve LEFT out of the notch (Convex turn) */ ''}
+          Q ${notchW},${H - notchH} ${notchW - notchR},${H - notchH}
+
+          ${/* 5. Go LEFT along the horizontal shelf to the Edge... BUT STOP for the corner */ ''}
+          L ${notchR},${H - notchH}
+
+          ${/* 6. Curve UP at the Left Edge (The corner you highlighted) */ ''}
+          Q 0,${H - notchH} 0,${H - notchH - notchR}
+
+          ${/* 7. Close the shape back to the start (Vertical line up left edge) */ ''}
+          L 0,${R}
+          Z
+        `;
+      }
+
+      setPathD(d.replace(/\s+/g, ' '));
+    };
+
+    // Run on mount
+    updatePath();
+
+    // Run on resize
+    const resizeObserver = new ResizeObserver(() => updatePath());
+    if (cardRef.current) resizeObserver.observe(cardRef.current);
+    window.addEventListener('resize', updatePath);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updatePath);
+    };
+  }, []);
+
   return (
     <section ref={wrapRef} className="bg-white overflow-hidden">
+      
+      {/* ================================================================
+        SVG DEFINITION (Hidden)
+        ================================================================
+      */}
+      <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
+        <defs>
+          <clipPath id={clipPathId} clipPathUnits="userSpaceOnUse">
+            <path d={pathD} />
+          </clipPath>
+        </defs>
+      </svg>
+
       <div className="px-4 md:px-8 lg:px-12 xl:px-16 pt-28 md:pt-36 pb-20">
         <div className="mx-auto max-w-[1400px]">
           {/* ======================= HEADING ======================= */}
@@ -83,65 +199,57 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* ======================= HERO CARD (UPDATED) ======================= */}
+          {/* ======================= HERO CARD ======================= */}
           <div className="mt-8 md:mt-10 relative w-full">
-            <div className="relative w-full max-w-[1280px] mx-auto overflow-visible">
+            <div
+              className="
+                relative w-full max-w-[1280px] mx-auto overflow-visible
+                [--notch-w:0px] [--notch-h:0px]
+                md:[--notch-w:clamp(280px,26vw,360px)]
+                md:[--notch-h:clamp(160px,18vw,210px)]
+              "
+            >
               {/* Card */}
               <div
                 ref={cardRef}
                 className="
                   relative w-full
                   h-[350px] sm:h-[400px] md:h-[460px] lg:h-[500px]
-                  rounded-[34px] sm:rounded-[38px] md:rounded-[44px]
-                  overflow-hidden shadow-2xl text-white
+                  shadow-2xl text-white
                 "
+                style={{
+                  clipPath: `url(#${clipPathId})`,
+                  willChange: 'clip-path'
+                }}
               >
                 {/* Background */}
                 <div className="absolute inset-0 z-0">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#151515] to-[#E65C00]" />
 
-                  {/* ✅ Bigger hero-bg look */}
                   <div
                     className="absolute inset-0 bg-[url('/assets/hero-bg.png')] bg-no-repeat opacity-95 mix-blend-overlay"
                     style={{
-                      backgroundSize: '145% 145%',
-                      backgroundPosition: '60% 55%',
+                      backgroundSize: '175% 175%',
+                      backgroundPosition: '62% 55%',
                     }}
                   />
-
-                  <div
-                    className="absolute inset-0 bg-[url('/assets/noise.png')] opacity-20 mix-blend-overlay"
-                    style={{ backgroundSize: '220px 220px' }}
-                  />
-
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(0,0,0,0.55),transparent_60%)]" />
-
-                  {/* ✅ Cut corner space (white block) */}
-                  <div
-                    className="
-                      hidden md:block
-                      absolute left-0 bottom-0
-                      w-[340px] lg:w-[360px]
-                      h-[180px] lg:h-[190px]
-                      bg-white
-                      rounded-tr-[44px]
-                      z-[5]
-                    "
-                  />
                 </div>
 
-                {/* ✅ Content MUST be above robot so list stays visible */}
+                {/* Content */}
                 <div className="relative z-40 h-full grid grid-cols-1 md:grid-cols-2 p-8 sm:p-10 md:p-12 lg:p-14">
                   {/* Left side */}
                   <div className="flex flex-col justify-between h-full">
-                    <h2 className="font-urbanist font-bold leading-tight text-[20px] sm:text-[22px] md:text-[26px] lg:text-[28px]">
+                    <h2 className="font-urbanist font-semibold leading-tight text-[20px] sm:text-[22px] md:text-[26px] lg:text-[28px]">
                       Seamless Digital <br />
                       Solutions &amp; Scalable <br />
                       Systems
                     </h2>
 
-                    {/* ✅ Push list above the cut-corner area on md+ */}
-                    <ul className="space-y-2 mt-6 md:mt-auto md:pb-[180px] lg:pb-[195px]">
+                    <ul
+                      className="space-y-2 mt-6 md:mt-auto"
+                      style={{ paddingBottom: 'calc(var(--notch-h) + 18px)' }}
+                    >
                       {['Expert Full-Stack Talent', 'Automated Business Flow', 'Custom ERP Architecture'].map(
                         (item, i) => (
                           <li
@@ -157,7 +265,7 @@ export default function HeroSection() {
                   </div>
 
                   {/* Right side */}
-                  <div className="flex flex-col justify-end items-start md:items-end text-left md:text-right mt-6 md:mt-0">
+                  <div className="flex flex-col justify-center items-start md:items-end text-left md:text-right mt-6 md:mt-15">
                     <p className="text-[12px] sm:text-[13px] md:text-[14px] text-white/85 leading-relaxed max-w-[330px] mb-6 md:mb-9">
                       Deploy high-performance web applications and automated workflows. Scale your business
                       operations with our dedicated expert developers.
@@ -190,7 +298,7 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Badge inside cut corner */}
+              {/* Badge */}
               <div
                 ref={badgeRef}
                 className="
@@ -198,11 +306,20 @@ export default function HeroSection() {
                   mt-6 md:mt-0
                   md:absolute md:left-0 md:bottom-0
                   md:z-50
-                  w-full max-w-[300px]
-                  md:w-[320px]
                 "
+                style={{
+                  width: 'min(92vw, 320px)',
+                  transform: 'translate3d(0,0,0)',
+                  // marginLeft: 'clamp(0px, 0.9vw, 14px)',
+                  marginBottom: 'clamp(0px, 0.9vw, 4px)',
+                }}
               >
-                <div className="bg-[#EAEAEA] rounded-[24px] p-6 shadow-xl relative overflow-hidden md:ml-4 md:mb-4">
+                <div
+                  className="bg-[#EAEAEA] rounded-[24px] p-6 shadow-xl relative overflow-hidden"
+                  style={{
+                    minHeight: 'calc(var(--notch-h) - 18px)',
+                  }}
+                >
                   <div className="absolute -right-6 -top-6 w-20 h-20 bg-white/50 rounded-full blur-xl" />
 
                   <div className="flex justify-between items-start mb-2">
@@ -239,13 +356,13 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* ✅ Robot: moved slightly RIGHT + behind text */}
+              {/* Robot */}
               <div
                 ref={robotRef}
                 className="
                   absolute
                   left-[56%] md:left-[55%] lg:left-[54%]
-                  bottom-0
+                  bottom-[5px]
                   z-30
                   pointer-events-none
                   w-[320px] sm:w-[440px] md:w-[600px] lg:w-[700px]
