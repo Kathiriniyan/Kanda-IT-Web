@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Commented out invalid border-color declarations */
+/* .border-[#FF5F15~!@#$%^&&**((()))] {
+  border-color: #FF5F15~!@#$%^&&**((());
+} */
+/* .border-[#FF5F15~!@#$%^&&**((() )] {
+  border-color: #FF5F15~!@#$%^&&**((() );
+} */
+
 @theme {
     --font-sans: 'Inter', sans-serif;
     --font-urbanist: 'Urbanist', sans-serif;
@@ -10,3 +18,11 @@
         @apply bg-white text-sm text-gray-800 antialiased;
     }
 }
+
+/* Removed invalid border-color declarations */
+/* .border-[#FF5F15~!@#$%^&&**((()))] {
+  border-color: #FF5F15~!@#$%^&&**((());
+} */
+/* .border-[#FF5F15~!@#$%^&&**((() )] {
+  border-color: #FF5F15~!@#$%^&&**((() );
+} */

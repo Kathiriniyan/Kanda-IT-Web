@@ -1,3 +1,5 @@
+import SuccessSection from "@/sections/success-section";
+import ExcellenceSection from "@/sections/excellence-section";
 import FaqSection from "@/sections/faq-section";
 import FeaturesSection from "@/sections/features-section";
 import HeroSection from "@/sections/hero-section";
@@ -12,12 +14,14 @@ export default function Page() {
         <main>
             <HeroSection />
             <LoopBanner/>
-            <StatsSection />
+
+
+
+            {/* <StatsSection />
             <FeaturesSection />
-            <FaqSection />
-            <OurTeamSection />
-            <PricingSection />
-            <TestimonialSection />
+            
+            <SuccessSection/>
+            <FaqSection /> */}
         </main>
     );
 }

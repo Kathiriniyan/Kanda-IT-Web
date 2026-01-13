@@ -67,11 +67,6 @@ function Sparkle({ className = "" }: { className?: string }) {
   );
 }
 
-/**
- * ✅ Fix: show sparkle AFTER the last word too
- * Input: "Be ✦ Creative ✦ With ✦ Kanda ✦ IT ✦"
- * Output: Be ✦ Creative ✦ With ✦ Kanda ✦ IT ✦   (ending sparkle included)
- */
 function MarqueeContent({
   text,
   className,
@@ -88,9 +83,12 @@ function MarqueeContent({
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // ✅ reduced icon size ~25%
   const sparkleEl = (
     <Sparkle
-      className={`mx-[clamp(14px,2.2vw,34px)] h-[clamp(18px,2.8vw,44px)] w-[clamp(18px,2.8vw,44px)] ${sparkleClassName ?? ""}`}
+      className={`mx-[clamp(10px,1.65vw,25px)] h-[clamp(14px,2.1vw,33px)] w-[clamp(14px,2.1vw,33px)] ${
+        sparkleClassName ?? ""
+      }`}
     />
   );
 
@@ -99,13 +97,9 @@ function MarqueeContent({
       {parts.map((p, i) => (
         <React.Fragment key={`${p}-${i}`}>
           <span>{p}</span>
-
-          {/* middle sparkles */}
           {i !== parts.length - 1 && sparkleEl}
         </React.Fragment>
       ))}
-
-      {/* ✅ trailing sparkle if your string ends with ✦ */}
       {hasTrailingStar && sparkleEl}
     </span>
   );
@@ -167,7 +161,8 @@ function VelocityRow({
   const spans = Array.from({ length: numCopies }).map((_, i) => (
     <span key={i} ref={i === 0 ? copyRef : null} className="flex-shrink-0">
       <MarqueeContent text={text} className={rowTextClassName} sparkleClassName="" />
-      <span className="inline-block w-[clamp(24px,3vw,56px)]" />
+      {/* ✅ reduced spacer ~25% */}
+      <span className="inline-block w-[clamp(18px,2.25vw,42px)]" />
     </span>
   ));
 
@@ -183,7 +178,7 @@ function VelocityRow({
 export default function LoopBanner({
   topText = "Be ✦ Creative ✦ With ✦ Kanda ✦ IT ✦",
   bottomText = "Service 1 ✦ Service 2 ✦ Service 3 ✦ Service 4 ✦ Service 5 ✦",
-  velocity = 60,
+  velocity = 40,
   className = "",
   damping = 50,
   stiffness = 400,
@@ -191,23 +186,19 @@ export default function LoopBanner({
   velocityMapping = { input: [0, 1000], output: [0, 5] },
   scrollContainerRef,
 }: LoopBannerProps) {
+  // ✅ reduced text size ~25%
   const sharedRowText =
     "text-white font-urbanist font-extrabold uppercase leading-none tracking-[0.06em] " +
-    "text-[clamp(18px,3.4vw,56px)]";
+    "text-[clamp(14px,2.55vw,42px)]";
 
   return (
     <section className={`w-full ${className}`}>
-      <AnimatedContent
-        distance={24}
-        duration={0.9}
-        ease="power3.out"
-        threshold={0.2}
-      >
+      <AnimatedContent distance={24} duration={0.9} ease="power3.out" threshold={0.2}>
         <div
           className="
             w-screen overflow-hidden
             bg-[#FF5F15]
-            py-[clamp(14px,2.2vw,26px)]
+            py-[clamp(10px,1.65vw,19px)]
           "
         >
           <VelocityRow
@@ -221,7 +212,8 @@ export default function LoopBanner({
             rowTextClassName={sharedRowText}
           />
 
-          <div className="h-[clamp(10px,1.3vw,18px)]" />
+          {/* ✅ reduced gap ~25% */}
+          <div className="h-[clamp(8px,0.98vw,14px)]" />
 
           <VelocityRow
             text={bottomText}
