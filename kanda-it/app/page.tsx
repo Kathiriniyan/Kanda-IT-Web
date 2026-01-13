@@ -8,15 +8,17 @@ import OurTeamSection from "@/sections/our-team";
 import PricingSection from "@/sections/pricing-section";
 import StatsSection from "@/sections/stats-section";
 import TestimonialSection from "@/sections/testimonial-section";
+import ServiceSection from "@/sections/service-section";
 
 export default function Page() {
     return (
         <main>
             <HeroSection />
-            <LoopBanner/>
+            <LoopBanner />
 
 
 
+            <ServiceSection />
             {/* <StatsSection />
             <FeaturesSection />
             
