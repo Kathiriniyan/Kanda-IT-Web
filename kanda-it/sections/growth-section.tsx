@@ -9,7 +9,8 @@ import { useSectionSnap } from "@/hooks/useSectionSnap";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function GrowthSection() {
-  // ✅ SLIDE DECK CONFIGURATION
+  // ✅ SLIDE DECK CONFIG
+  // URATION
   const snapRef = useSectionSnap<HTMLElement>({
     // Determines how "magnetic" the entry is. 
     // "top 85%" = As soon as it peeks 15% into view, it snaps full screen.
